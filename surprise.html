@@ -1,0 +1,331 @@
+<title>Lantern Surprise</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: one night-sky canvas behind everything. A glowing lantern gate opens into a single-column letter with flip cards. */
+:root {
+  --night: #17102b;
+  --night-2: #241640;
+  --marigold: #ffb347;
+  --rose: #ff7a9a;
+  --cream: #fff3e0;
+  --mist: #c9b9e8;
+  --font-display: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+  --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  background: radial-gradient(ellipse at 50% 0%, var(--night-2), var(--night) 70%) fixed;
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.6;
+  padding-inline: 18px;
+  overflow-x: hidden;
+}
+canvas.sky, canvas.confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+canvas.sky { z-index: 0; }
+canvas.confetti { z-index: 20; }
+main { position: relative; z-index: 1; max-width: 640px; margin-inline: auto; }
+
+/* Gate */
+.gate {
+  min-height: calc(100svh - 40px);
+  display: grid; place-content: center; justify-items: center; gap: 22px; text-align: center;
+  transition: opacity 1s ease, transform 1s ease;
+}
+.gate .small { font-size: 13px; letter-spacing: .28em; text-transform: uppercase; color: var(--mist); margin: 0; }
+.gate h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(2.6rem, 11vw, 4.6rem); line-height: 1.02; margin: 0; text-wrap: balance; }
+.gate h1 em { color: var(--marigold); }
+.lantern-btn {
+  position: relative; width: 112px; height: 148px; border: 0; background: none; cursor: pointer; padding: 0;
+  animation: bob 4.5s ease-in-out infinite;
+}
+.lantern-btn:focus-visible { outline: 2px solid var(--cream); outline-offset: 10px; border-radius: 24px; }
+.lantern-btn .body {
+  position: absolute; inset: 14px 6px 12px; border-radius: 46% 46% 40% 40% / 38% 38% 30% 30%;
+  background: radial-gradient(circle at 50% 55%, #fff1c2 0%, var(--marigold) 45%, #e0762f 100%);
+  box-shadow: 0 0 40px 10px rgba(255,179,71,.55), 0 0 120px 40px rgba(255,122,154,.22);
+  animation: glow 3s ease-in-out infinite;
+}
+.lantern-btn .body::before, .lantern-btn .body::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(120,40,10,.28);
+}
+.lantern-btn .body::before { left: 33%; } .lantern-btn .body::after { right: 33%; }
+.lantern-btn .cap { position: absolute; left: 22px; right: 22px; top: 6px; height: 12px; border-radius: 6px; background: #7a3a1a; }
+.lantern-btn .base { position: absolute; left: 30px; right: 30px; bottom: 4px; height: 10px; border-radius: 5px; background: #7a3a1a; }
+.lantern-btn .string { position: absolute; left: 50%; bottom: -26px; width: 2px; height: 26px; background: var(--rose); }
+.hint { margin: 0; color: var(--mist); font-size: 15px; animation: pulse 2.4s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-12px) rotate(1.5deg); } }
+@keyframes glow { 50% { filter: brightness(1.18); } }
+@keyframes pulse { 50% { opacity: .45; } }
+
+body.open .gate { opacity: 0; transform: translateY(-60px) scale(.9); pointer-events: none; height: 0; min-height: 0; overflow: hidden; }
+
+/* Revealed content */
+.reveal { display: none; padding-block: 12vh 12vh; }
+body.open .reveal { display: block; }
+.reveal > section { margin-bottom: 18vh; }
+.armed .fx { opacity: 0; transform: translateY(26px); transition: opacity .9s ease, transform .9s ease; }
+.armed .fx.in { opacity: 1; transform: none; }
+
+.hello h2 {
+  font-family: var(--font-display); font-weight: 400; font-size: clamp(2.8rem, 12vw, 5.2rem); line-height: 1; margin: 0 0 20px; text-wrap: balance;
+}
+.hello h2 .w { display: inline-block; opacity: 0; transform: translateY(24px) rotate(2deg); animation: rise .9s cubic-bezier(.2,.8,.2,1) forwards; }
+.hello h2 em { color: var(--marigold); }
+.hello p { color: var(--mist); font-size: 1.1rem; max-width: 34ch; }
+@keyframes rise { to { opacity: 1; transform: none; } }
+
+.label { font-size: 12px; letter-spacing: .26em; text-transform: uppercase; color: var(--marigold); margin: 0 0 14px; }
+.reasons h3, .letter h3, .wish h3 { font-family: var(--font-display); font-weight: 400; font-size: clamp(2rem, 8vw, 3rem); line-height: 1.05; margin: 0 0 26px; text-wrap: balance; }
+
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.card { perspective: 900px; aspect-ratio: 1 / 1.05; border: 0; background: none; padding: 0; cursor: pointer; font: inherit; color: inherit; text-align: center; }
+.card:focus-visible { outline: 2px solid var(--marigold); outline-offset: 4px; border-radius: 18px; }
+.card .in-card { position: relative; width: 100%; height: 100%; transition: transform .8s cubic-bezier(.2,.8,.2,1); transform-style: preserve-3d; }
+.card.flipped .in-card { transform: rotateY(180deg); }
+.card .face {
+  position: absolute; inset: 0; display: grid; place-content: center; gap: 8px; padding: 16px; border-radius: 18px;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden; min-width: 0;
+}
+.card .front { background: linear-gradient(160deg, rgba(255,255,255,.09), rgba(255,255,255,.03)); border: 1px solid rgba(255,243,224,.18); }
+.card .front .t { font-family: var(--font-display); font-style: italic; font-size: 1.55rem; line-height: 1.1; }
+.card .front .tap { font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--mist); }
+.card .back { background: linear-gradient(160deg, var(--marigold), #ff9a5a 60%, var(--rose)); color: #2a1305; transform: rotateY(180deg); font-weight: 500; font-size: .98rem; line-height: 1.4; }
+
+.letter .paper {
+  background: rgba(255,243,224,.07); border: 1px solid rgba(255,243,224,.16); border-radius: 22px; padding: clamp(22px, 6vw, 38px);
+  backdrop-filter: blur(4px);
+}
+.letter p { margin: 0 0 1.1em; max-width: 52ch; }
+.letter .sign { font-family: var(--font-display); font-style: italic; font-size: 1.9rem; color: var(--marigold); margin: 20px 0 0; }
+
+.wish { text-align: center; }
+.wish p.sub { color: var(--mist); max-width: 32ch; margin: 0 auto 26px; }
+.wish button {
+  font: inherit; font-weight: 600; font-size: 1.05rem; color: #2a1305; border: 0; cursor: pointer; padding: 16px 30px; border-radius: 999px;
+  background: linear-gradient(120deg, var(--marigold), var(--rose)); box-shadow: 0 10px 40px -8px rgba(255,122,154,.6);
+  transition: transform .2s ease;
+}
+.wish button:hover { transform: translateY(-2px) scale(1.03); }
+.wish button:focus-visible { outline: 2px solid var(--cream); outline-offset: 4px; }
+.wish .done { font-family: var(--font-display); font-style: italic; font-size: 1.7rem; color: var(--marigold); margin: 26px 0 0; min-height: 2.4em; opacity: 0; transition: opacity 1s ease; }
+.wish .done.show { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001s !important; animation-iteration-count: 1 !important; transition-duration: .001s !important; }
+  .lantern-btn, .hint { animation: none; }
+}
+</style>
+
+<canvas class="sky" id="sky"></canvas>
+<canvas class="confetti" id="confetti"></canvas>
+
+<main>
+  <div class="gate" id="gate">
+    <p class="small">Made just for you</p>
+    <h1>Something <em>glowing</em> is waiting</h1>
+    <button class="lantern-btn" id="open" aria-label="Open your surprise">
+      <span class="cap"></span><span class="body"></span><span class="base"></span><span class="string"></span>
+    </button>
+    <p class="hint">Tap the lantern</p>
+  </div>
+
+  <div class="reveal" id="reveal">
+    <section class="hello">
+      <h2 id="headline"></h2>
+      <p>Close your eyes for one second, then keep scrolling. This whole page is for you.</p>
+    </section>
+
+    <section class="reasons fx">
+      <p class="label">Six things I would never say out loud</p>
+      <h3>Tap each one to open it</h3>
+      <div class="cards" id="cards"></div>
+    </section>
+
+    <section class="letter fx">
+      <p class="label">A letter</p>
+      <h3>What I really want to say</h3>
+      <div class="paper">
+        <p>Laxshmi, we do not share blood. We shared a school and a thousand small days, and somewhere along the way you stopped being my school sister and became my family.</p>
+        <p>People say blood makes a bloodline. You proved it is the people who stay. You showed up when it counted, you kept my secrets, and you believe in me even when I do not.</p>
+        <p>Thank you for choosing me as your own. Whatever comes next for you, big or small, I will be the loudest person cheering. You deserve every good thing.</p>
+        <p class="sign">Your brother</p>
+      </div>
+    </section>
+
+    <section class="wish fx">
+      <p class="label">One last thing</p>
+      <h3>Make a wish</h3>
+      <p class="sub">Press the button, think of something you want this year, and let the lanterns carry it up.</p>
+      <button id="wishBtn">Send my wish up</button>
+      <p class="done" id="done" aria-live="polite"></p>
+    </section>
+  </div>
+</main>
+
+<script>
+/* Edit these to personalise the page. Leave NAME empty to use "sister". */
+var CONFIG = {
+  NAME: "Laxshmi",
+  REASONS: [
+    ["Always there", "Whenever I needed someone, you showed up first."],
+    ["Your laugh", "It fixes a bad day faster than anything else."],
+    ["Honest with me", "You tell me the truth, and you say it kindly."],
+    ["Our secrets", "Some stories only the two of us know, and I love that."],
+    ["Brave", "You make hard things look possible."],
+    ["Bloodline", "Not blood, but you are my bloodline."]
+  ]
+};
+
+(function () {
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var name = (CONFIG.NAME || "").trim();
+
+  /* Headline, word by word */
+  var head = document.getElementById("headline");
+  var words = name ? ["Surprise,", "<em>" + name + "</em>!"] : ["Surprise,", "<em>my</em>", "<em>dear</em>", "<em>sister</em>!"];
+  head.innerHTML = words.map(function (w, i) {
+    return '<span class="w" style="animation-delay:' + (0.35 + i * 0.22) + 's">' + w + "</span> ";
+  }).join("");
+
+  /* Flip cards */
+  var cards = document.getElementById("cards");
+  CONFIG.REASONS.forEach(function (r) {
+    var b = document.createElement("button");
+    b.className = "card";
+    b.setAttribute("aria-pressed", "false");
+    b.innerHTML = '<span class="in-card"><span class="face front"><span class="t"></span><span class="tap">Tap</span></span><span class="face back"></span></span>';
+    b.querySelector(".t").textContent = r[0];
+    b.querySelector(".back").textContent = r[1];
+    b.addEventListener("click", function () {
+      var on = b.classList.toggle("flipped");
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    cards.appendChild(b);
+  });
+
+  /* Sky: stars + rising lanterns */
+  var sky = document.getElementById("sky"), sctx = sky.getContext("2d");
+  var W = 0, H = 0, DPR = Math.min(window.devicePixelRatio || 1, 2);
+  var stars = [], lanterns = [];
+  function resize() {
+    W = window.innerWidth; H = window.innerHeight;
+    sky.width = W * DPR; sky.height = H * DPR; sctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    var cv = document.getElementById("confetti"); cv.width = W * DPR; cv.height = H * DPR; cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    stars = [];
+    var n = Math.round(W * H / 9000);
+    for (var i = 0; i < n; i++) stars.push({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.3 + .3, p: Math.random() * 6.28, s: Math.random() * 1.5 + .5 });
+  }
+  var conf = document.getElementById("confetti"), cx = conf.getContext("2d");
+  function newLantern(fromBottom, x) {
+    var size = Math.random() * 16 + 14;
+    return { x: x !== undefined ? x : Math.random() * W, y: fromBottom ? H + size * 2 : Math.random() * H, size: size,
+      vy: Math.random() * .35 + .18, sway: Math.random() * 20 + 8, ph: Math.random() * 6.28, hue: Math.random() < .5 ? 38 : 345, a: Math.random() * .4 + .45 };
+  }
+  function drawLantern(l, t) {
+    var x = l.x + Math.sin(t / 1400 + l.ph) * l.sway, y = l.y, w = l.size, h = l.size * 1.3;
+    var g = sctx.createRadialGradient(x, y, 0, x, y, w * 3.2);
+    g.addColorStop(0, "hsla(" + l.hue + ",100%,65%," + l.a * .5 + ")"); g.addColorStop(1, "hsla(" + l.hue + ",100%,60%,0)");
+    sctx.fillStyle = g; sctx.fillRect(x - w * 3.2, y - w * 3.2, w * 6.4, w * 6.4);
+    var b = sctx.createLinearGradient(x, y - h / 2, x, y + h / 2);
+    b.addColorStop(0, "hsla(" + l.hue + ",100%,82%," + l.a + ")"); b.addColorStop(1, "hsla(" + l.hue + ",95%,55%," + l.a + ")");
+    sctx.fillStyle = b; sctx.beginPath();
+    sctx.moveTo(x - w * .38, y - h / 2); sctx.lineTo(x + w * .38, y - h / 2);
+    sctx.quadraticCurveTo(x + w * .62, y, x + w * .32, y + h / 2); sctx.lineTo(x - w * .32, y + h / 2);
+    sctx.quadraticCurveTo(x - w * .62, y, x - w * .38, y - h / 2); sctx.fill();
+  }
+  var last = 0;
+  function frame(t) {
+    sctx.clearRect(0, 0, W, H);
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i], tw = .45 + .55 * Math.sin(t / 900 * s.s + s.p);
+      sctx.fillStyle = "rgba(255,243,224," + (.25 + tw * .6) + ")";
+      sctx.beginPath(); sctx.arc(s.x, s.y, s.r, 0, 6.283); sctx.fill();
+    }
+    var dt = Math.min(t - last, 50) / 16.7; last = t;
+    for (var j = lanterns.length - 1; j >= 0; j--) {
+      var l = lanterns[j]; l.y -= l.vy * dt * (l.boost || 1);
+      drawLantern(l, t);
+      if (l.y < -l.size * 4) { if (l.once) lanterns.splice(j, 1); else lanterns[j] = newLantern(true); }
+    }
+    drawConfetti(dt);
+    requestAnimationFrame(frame);
+  }
+
+  /* Confetti */
+  var bits = [];
+  var colors = ["#ffb347", "#ff7a9a", "#fff3e0", "#c9b9e8", "#ffd27a"];
+  function burst(x, y, count) {
+    if (reduce) return;
+    for (var i = 0; i < count; i++) {
+      var a = Math.random() * 6.283, sp = Math.random() * 9 + 3;
+      bits.push({ x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 5, r: Math.random() * 6.28, vr: (Math.random() - .5) * .4,
+        w: Math.random() * 8 + 5, h: Math.random() * 5 + 3, c: colors[(Math.random() * colors.length) | 0], life: 1 });
+    }
+  }
+  function drawConfetti(dt) {
+    cx.clearRect(0, 0, W, H);
+    for (var i = bits.length - 1; i >= 0; i--) {
+      var b = bits[i];
+      b.vy += .24 * dt; b.vx *= .992; b.x += b.vx * dt; b.y += b.vy * dt; b.r += b.vr * dt; b.life -= .0045 * dt;
+      if (b.life <= 0 || b.y > H + 20) { bits.splice(i, 1); continue; }
+      cx.save(); cx.globalAlpha = Math.min(1, b.life * 1.6); cx.translate(b.x, b.y); cx.rotate(b.r);
+      cx.fillStyle = b.c; cx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h); cx.restore();
+    }
+  }
+
+  function release(n, fromX) {
+    for (var i = 0; i < n; i++) {
+      var l = newLantern(true, fromX !== undefined ? fromX + (Math.random() - .5) * 120 : undefined);
+      l.once = true; l.boost = 2.4 + Math.random(); l.y = H + Math.random() * 120; l.size = Math.random() * 14 + 18; l.a = .9;
+      lanterns.push(l);
+    }
+  }
+
+  resize(); window.addEventListener("resize", resize);
+  var count = Math.max(6, Math.round(W / 70));
+  for (var k = 0; k < count; k++) lanterns.push(newLantern(false));
+  requestAnimationFrame(frame);
+
+  /* Open */
+  var opened = false;
+  document.getElementById("open").addEventListener("click", function (e) {
+    if (opened) return; opened = true;
+    var r = e.currentTarget.getBoundingClientRect();
+    burst(r.left + r.width / 2, r.top + r.height / 2, 160);
+    release(10, r.left + r.width / 2);
+    document.body.classList.add("open");
+    window.scrollTo(0, 0);
+    setTimeout(function () { burst(W * .25, H * .35, 70); burst(W * .75, H * .3, 70); }, 700);
+    arm();
+  });
+
+  /* Scroll reveals */
+  function arm() {
+    var items = document.querySelectorAll(".fx");
+    if (!("IntersectionObserver" in window)) return;
+    document.documentElement.classList.add("armed");
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); } });
+    }, { threshold: .15 });
+    items.forEach(function (el) { io.observe(el); });
+    setTimeout(function () { items.forEach(function (el) { el.classList.add("in"); }); }, 9000);
+  }
+
+  /* Wish */
+  var wished = false;
+  document.getElementById("wishBtn").addEventListener("click", function (e) {
+    var r = e.currentTarget.getBoundingClientRect();
+    burst(r.left + r.width / 2, r.top, 140);
+    release(18);
+    var d = document.getElementById("done");
+    d.textContent = wished ? "Still going up. I hope it comes true." : "Wish sent. I hope it comes true.";
+    d.classList.add("show"); wished = true;
+  });
+})();
+</script>
